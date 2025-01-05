@@ -1,106 +1,121 @@
-import { Component } from "react";
-import {format, getDate,getYear, getMonth} from 'date-fns'
+import React, { Component } from "react";
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  startOfWeek, 
+  endOfWeek, 
+  addMonths, 
+  subMonths, 
+  addDays, 
+  getYear, 
+  isSameDay 
+} from "date-fns";
+import LeftPanel from "../LeftPanel";
 import styles from "./Calendar.module.sass";
-
+/* Стилізація кнопок
+  Фіксована обгортка календаря
+  При зміні з поточного місяця на інші ховати поточну дату календаря
+  Заповнити всі рядки тижнів днями*/
 class Calendar extends Component {
   constructor(props) {
     super(props);
-
     this.state = {
       currentDate: new Date(),
     };
   }
 
+
+  previousMonth = () => {
+    this.setState((prevState) => ({
+      currentDate: subMonths(prevState.currentDate, 1),
+    }));
+  };
+
+  nextMonth = () => {
+    this.setState((prevState) => ({
+      currentDate: addMonths(prevState.currentDate, 1),
+    }));
+  };
+
   render() {
     const { currentDate } = this.state;
+
     return (
       <section className={styles.calendar}>
         <LeftPanel currentDate={currentDate} />
-        <RightPanel currentDate={currentDate} />
+        <RightPanel
+          currentDate={currentDate}
+          onPreviousMonth={this.previousMonth}
+          onNextMonth={this.nextMonth}
+        />
       </section>
     );
   }
 }
-const LeftPanel = ({currentDate}) => {
-  return (
-  <article className={styles.leftPanel}>
-    <header>
-      <h2>{format(currentDate, 'eeee')}</h2>
-    </header>
-    <time className={styles.date}>
-      {getDate(currentDate)}
-    </time>
-  </article>
-  )
-};
 
-const RightPanel = ({currentDate}) => {
-  return(
-  <article className={styles.rightPanel}>
-      <h3>{format(currentDate, 'MMMM')} {getYear(currentDate)}</h3>
-    <table className={styles.calendarGrid}>
-      <thead>
-        <tr>
-          <th scope="col">S</th>
-          <th scope="col">M</th>
-          <th scope="col">T</th>
-          <th scope="col">W</th>
-          <th scope="col">T</th>
-          <th scope="col">F</th>
-          <th scope="col">S</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td>1</td>
-          <td>2</td>
-          <td>3</td>
-          <td>4</td>
-        </tr>
-        <tr>
-          <td>5</td>
-          <td>6</td>
-          <td>7</td>
-          <td>8</td>
-          <td>9</td>
-          <td>10</td>
-          <td>11</td>
-        </tr>
-        <tr>
-          <td>12</td>
-          <td>13</td>
-          <td>14</td>
-          <td>15</td>
-          <td>16</td>
-          <td>17</td>
-          <td>18</td>
-        </tr>
-        <tr>
-          <td>19</td>
-          <td>20</td>
-          <td>21</td>
-          <td>22</td>
-          <td>23</td>
-          <td>24</td>
-          <td>25</td>
-        </tr>
-        <tr>
-          <td>26</td>
-          <td>27</td>
-          <td>28</td>
-          <td>29</td>
-          <td>30</td>
-          <td className={styles.highlight}>
-            <time dateTime={format(currentDate, "yyyy-MM-dd")}>31</time>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </article>
-  )
+const RightPanel = ({ currentDate, onPreviousMonth, onNextMonth }) => {
+  const DAYS_OF_WEEK = ["S", "M", "T", "W", "T", "F", "S"];
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(monthStart);
+  const startWeek = startOfWeek(monthStart);
+  const endWeek = endOfWeek(monthEnd);
+
+  const renderCells = () => {
+    const rows = [];
+    let days = [];
+    let day = startWeek;
+
+    while (day <= endWeek) {
+      for (let i = 0; i < 7; i++) {
+        if (day >= monthStart && day <= monthEnd) {
+          const isToday = isSameDay(day, currentDate);
+          days.push(
+            <td
+              key={day.toISOString()}
+              className={isToday ? styles.highlight : ""}
+            >
+              <time dateTime={format(day, "yyyy-MM-dd")}>
+                {format(day, "d")}
+              </time>
+            </td>
+          );
+        } else {
+ 
+          days.push(<td key={day.toISOString()}></td>);
+        }
+        day = addDays(day, 1);
+      }
+      rows.push(<tr key={format(days[0].key, "yyyy-MM-dd")}>{days}</tr>);
+      days = [];
+    }
+
+    return rows;
+  };
+
+  return (
+    <article className={styles.rightPanel}>
+      <div className={styles.header}>
+        <button onClick={onPreviousMonth}>{"<"}</button>
+        <h3>
+          {format(currentDate, "MMMM")} {getYear(currentDate)}
+        </h3>
+        <button onClick={onNextMonth}>{">"}</button>
+      </div>
+      <table className={styles.calendarGrid}>
+        <thead>
+          <tr>
+            {DAYS_OF_WEEK.map((day, index) => (
+              <th key={index} scope="col">
+                {day}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{renderCells()}</tbody>
+      </table>
+    </article>
+  );
 };
 
 export default Calendar;
