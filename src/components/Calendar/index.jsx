@@ -13,7 +13,7 @@ import {
 } from "date-fns";
 import LeftPanel from "../LeftPanel";
 import styles from "./Calendar.module.sass";
-/* Стилізація кнопок
+/* 
   Фіксована обгортка календаря
   При зміні з поточного місяця на інші ховати поточну дату календаря
   Заповнити всі рядки тижнів днями*/
@@ -96,11 +96,11 @@ const RightPanel = ({ currentDate, onPreviousMonth, onNextMonth }) => {
   return (
     <article className={styles.rightPanel}>
       <div className={styles.header}>
-        <button onClick={onPreviousMonth}>{"<"}</button>
+        <button className={styles.btn} onClick={onPreviousMonth}>{"<"}</button>
         <h3>
           {format(currentDate, "MMMM")} {getYear(currentDate)}
         </h3>
-        <button onClick={onNextMonth}>{">"}</button>
+        <button className={styles.btn} onClick={onNextMonth}>{">"}</button>
       </div>
       <table className={styles.calendarGrid}>
         <thead>
