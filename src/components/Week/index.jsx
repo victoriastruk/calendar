@@ -1,12 +1,12 @@
-import DayCell from './DayCell';
+import Day from './Day';
 
-const CalendarRow = ({ startWeek, currentDate, monthStart, monthEnd }) => {
+const Week = ({ startWeek, currentDate, monthStart, monthEnd }) => {
   const days = [];
   let day = startWeek;
 
   for (let i = 0; i < 7; i++) {
     days.push(
-      <DayCell 
+      <Day 
         key={day.toISOString()}
         day={day}
         currentDate={currentDate}
@@ -20,4 +20,4 @@ const CalendarRow = ({ startWeek, currentDate, monthStart, monthEnd }) => {
   return <tr>{days}</tr>;
 };
 
-export default CalendarRow;
+export default Week;

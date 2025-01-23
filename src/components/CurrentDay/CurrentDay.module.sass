@@ -1,14 +1,11 @@
 @use '../../common/styles/vars' as var
+@use '../../common/styles/mixins' as *
 
 .leftPanel 
+    @include flex-center(column, space-evenly, center)
     background-color: var.$bg-color
     color: white
-    display: flex
     flex: 1
-    flex-direction: column
-    justify-content: space-evenly
-    align-items: center
-    text-align: center
     padding: 20px
     width: 100%
     min-width: 120px
