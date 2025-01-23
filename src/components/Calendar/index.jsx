@@ -1,31 +1,46 @@
 import React, { Component } from "react";
-import { 
-  format, 
-  startOfMonth, 
-  endOfMonth, 
-  startOfWeek, 
-  endOfWeek, 
-  addMonths, 
-  subMonths, 
-  addDays, 
-  getYear, 
-  isSameDay 
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addMonths,
+  subMonths,
+  addDays,
+  getYear,
+  isSameDay,
+  isSameMonth,
 } from "date-fns";
 import LeftPanel from "../LeftPanel";
 import styles from "./Calendar.module.sass";
-/* 
-  Фіксована обгортка календаря
-  При зміні з поточного місяця на інші ховати поточну дату календаря
-  Заповнити всі рядки тижнів днями*/
+
 class Calendar extends Component {
   constructor(props) {
     super(props);
     this.state = {
       currentDate: new Date(),
+      fixedDate: new Date(),
+      highlightCurrentDate: true,
     };
   }
+  componentDidMount() {
+    this.updateHighlightState();
+  }
 
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.currentDate !== this.state.currentDate) {
+      this.updateHighlightState();
+    }
+  }
 
+  updateHighlightState = () => {
+    const { currentDate } = this.state;
+    const today = new Date();
+    const isSameMonthView = isSameMonth(currentDate, today);
+
+    this.setState({ highlightCurrentDate: isSameMonthView });
+  };
   previousMonth = () => {
     this.setState((prevState) => ({
       currentDate: subMonths(prevState.currentDate, 1),
@@ -39,13 +54,14 @@ class Calendar extends Component {
   };
 
   render() {
-    const { currentDate } = this.state;
+    const { currentDate, fixedDate, highlightCurrentDate } = this.state;
 
     return (
       <section className={styles.calendar}>
-        <LeftPanel currentDate={currentDate} />
+        <LeftPanel currentDate={fixedDate} />
         <RightPanel
           currentDate={currentDate}
+          highlightCurrentDate={highlightCurrentDate}
           onPreviousMonth={this.previousMonth}
           onNextMonth={this.nextMonth}
         />
@@ -54,7 +70,13 @@ class Calendar extends Component {
   }
 }
 
-const RightPanel = ({ currentDate, onPreviousMonth, onNextMonth }) => {
+const RightPanel = ({
+  currentDate,
+  fixedDate,
+  highlightCurrentDate,
+  onPreviousMonth,
+  onNextMonth,
+}) => {
   const DAYS_OF_WEEK = ["S", "M", "T", "W", "T", "F", "S"];
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
@@ -65,29 +87,32 @@ const RightPanel = ({ currentDate, onPreviousMonth, onNextMonth }) => {
     const rows = [];
     let days = [];
     let day = startWeek;
+    const totalDays = 6 * 7;
 
-    while (day <= endWeek) {
-      for (let i = 0; i < 7; i++) {
-        if (day >= monthStart && day <= monthEnd) {
-          const isToday = isSameDay(day, currentDate);
-          days.push(
-            <td
-              key={day.toISOString()}
-              className={isToday ? styles.highlight : ""}
-            >
-              <time dateTime={format(day, "yyyy-MM-dd")}>
-                {format(day, "d")}
-              </time>
-            </td>
-          );
-        } else {
- 
-          days.push(<td key={day.toISOString()}></td>);
-        }
-        day = addDays(day, 1);
+    for (let i = 0; i < totalDays; i++) {
+      const isCurrentDate =
+        highlightCurrentDate &&
+        isSameDay(day, new Date()) &&
+        isSameMonth(day, currentDate);
+      const isInCurrentMonth = isSameMonth(day, currentDate);
+
+      days.push(
+        <td
+          key={day.toISOString()}
+          className={`${isCurrentDate ? styles.highlight : ""} ${
+            isInCurrentMonth ? "" : styles.disabled
+          }`}
+        >
+          <time dateTime={format(day, "yyyy-MM-dd")}>{format(day, "d")}</time>
+        </td>
+      );
+
+      day = addDays(day, 1);
+
+      if (days.length === 7) {
+        rows.push(<tr key={format(days[0].key, "yyyy-MM-dd")}>{days}</tr>);
+        days = [];
       }
-      rows.push(<tr key={format(days[0].key, "yyyy-MM-dd")}>{days}</tr>);
-      days = [];
     }
 
     return rows;
@@ -96,17 +121,21 @@ const RightPanel = ({ currentDate, onPreviousMonth, onNextMonth }) => {
   return (
     <article className={styles.rightPanel}>
       <div className={styles.header}>
-        <button className={styles.btn} onClick={onPreviousMonth}>{"<"}</button>
+        <button className={styles.btn} onClick={onPreviousMonth}>
+          {"<"}
+        </button>
         <h3>
           {format(currentDate, "MMMM")} {getYear(currentDate)}
         </h3>
-        <button className={styles.btn} onClick={onNextMonth}>{">"}</button>
+        <button className={styles.btn} onClick={onNextMonth}>
+          {">"}
+        </button>
       </div>
       <table className={styles.calendarGrid}>
         <thead>
           <tr>
             {DAYS_OF_WEEK.map((day, index) => (
-              <th key={index} scope="col">
+              <th className={styles.dayOfWeek} key={index} scope="col">
                 {day}
               </th>
             ))}
